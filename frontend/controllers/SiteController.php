@@ -27,7 +27,7 @@ class SiteController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['logout', 'signup'],
+                'only' => ['logout', 'signup', 'tracker'],
                 'rules' => [
                     [
                         'actions' => ['signup'],
@@ -35,11 +35,16 @@ class SiteController extends Controller
                         'roles' => ['?'],
                     ],
                     [
-                        'actions' => ['logout'],
+                        'actions' => ['logout', 'tracker'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
                 ],
+                'denyCallback' => function ($rule, $action) {
+                    if ($action->id === 'tracker') {
+                        return Yii::$app->response->redirect(['site/login']);
+                    }
+                },
             ],
             'verbs' => [
                 'class' => VerbFilter::class,
@@ -142,6 +147,16 @@ class SiteController extends Controller
     public function actionAbout()
     {
         return $this->render('about');
+    }
+
+    /**
+     * Displays task tracker page.
+     *
+     * @return mixed
+     */
+    public function actionTracker()
+    {
+        return $this->render('tracker');
     }
 
     /**
