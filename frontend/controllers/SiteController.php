@@ -27,7 +27,7 @@ class SiteController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['logout', 'signup', 'tracker'],
+                'only' => ['logout', 'signup'],
                 'rules' => [
                     [
                         'actions' => ['signup'],
@@ -35,7 +35,7 @@ class SiteController extends Controller
                         'roles' => ['?'],
                     ],
                     [
-                        'actions' => ['logout', 'tracker'],
+                        'actions' => ['logout'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -147,16 +147,6 @@ class SiteController extends Controller
     public function actionAbout()
     {
         return $this->render('about');
-    }
-
-    /**
-     * Displays task tracker page.
-     *
-     * @return mixed
-     */
-    public function actionTracker()
-    {
-        return $this->render('tracker');
     }
 
     /**

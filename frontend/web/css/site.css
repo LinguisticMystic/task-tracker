@@ -101,3 +101,7 @@ a.desc:after {
 {
     text-decoration: none;
 }
+
+.form-group .help-block {
+    color: #dc3545;
+}
