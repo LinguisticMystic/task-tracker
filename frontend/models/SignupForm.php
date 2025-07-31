@@ -41,7 +41,7 @@ class SignupForm extends Model
     /**
      * Signs user up.
      *
-     * @return bool whether the creating new account was successful and email was sent
+     * @return bool whether the creating new account was successful
      */
     public function signup()
     {
@@ -54,9 +54,9 @@ class SignupForm extends Model
         $user->email = $this->email;
         $user->setPassword($this->password);
         $user->generateAuthKey();
-        $user->generateEmailVerificationToken();
+        $user->status = User::STATUS_ACTIVE; // Set user as active immediately
 
-        return $user->save() && $this->sendEmail($user);
+        return $user->save();
     }
 
     /**
