@@ -3,11 +3,13 @@
 namespace frontend\controllers;
 
 use Yii;
+use yii\web\Response;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
-use common\models\Task;
+use yii\filters\auth\HttpBearerAuth;
 use yii\data\ActiveDataProvider;
+use common\models\Task;
 
 /**
  * Task controller
@@ -32,6 +34,10 @@ class TaskController extends Controller
                         'roles' => ['@'],
                     ],
                 ],
+            ],
+            'authenticator' => [
+                'class' => HttpBearerAuth::class,
+                'only' => ['api-tasks'],
             ],
             'verbs' => [
                 'class' => VerbFilter::class,
@@ -164,6 +170,27 @@ class TaskController extends Controller
         }
 
         return $this->redirect(['task/tracker']);
+    }
+
+    /**
+     * Returns all tasks for the current user as JSON.
+     * 
+     * @return Response
+     */
+    public function actionApiTasks()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $tasks = Task::find()
+            ->where(['user_id' => Yii::$app->user->id])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->asArray()
+            ->all();
+
+        return [
+            'success' => true,
+            'tasks' => $tasks,
+        ];
     }
 
     /**
