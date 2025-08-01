@@ -7,12 +7,15 @@ use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
 use common\models\Task;
+use yii\data\ActiveDataProvider;
 
 /**
  * Task controller
  */
 class TaskController extends Controller
 {
+    private const PAGE_SIZE = 10;
+    
     /**
      * {@inheritdoc}
      */
@@ -21,10 +24,10 @@ class TaskController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['index', 'create', 'update', 'delete', 'tracker'],
+                'only' => ['index', 'create', 'update', 'delete', 'tracker', 'toggle'],
                 'rules' => [
                     [
-                        'actions' => ['index', 'create', 'update', 'delete', 'tracker'],
+                        'actions' => ['index', 'create', 'update', 'delete', 'tracker', 'toggle'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -36,6 +39,7 @@ class TaskController extends Controller
                     'create' => ['post'],
                     'update' => ['post'],
                     'delete' => ['post'],
+                    'toggle' => ['post'],
                 ],
             ],
         ];
@@ -50,14 +54,16 @@ class TaskController extends Controller
     {
         $task = new Task();
 
-        $tasks = Task::find()
-            ->where(['user_id' => Yii::$app->user->id])
-            ->orderBy(['created_at' => SORT_DESC])
-            ->all();
-        
+        $dataProvider = new ActiveDataProvider([
+            'query' => Task::find()->where(['user_id' => Yii::$app->user->id])->orderBy(['created_at' => SORT_DESC]),
+            'pagination' => [
+                'pageSize' => self::PAGE_SIZE,
+            ],
+        ]);
+
         return $this->render('@frontend/views/site/tracker', [
             'task' => $task,
-            'tasks' => $tasks,
+            'dataProvider' => $dataProvider,
         ]);
     }
 
@@ -77,5 +83,100 @@ class TaskController extends Controller
         }
 
         return $this->redirect(['task/tracker']);
+    }
+
+    /**
+     * Updates an existing task.
+     *
+     * @return mixed
+     */
+    public function actionUpdate()
+    {
+        $taskId = Yii::$app->request->post('id');
+        
+        if ($taskId) {
+            $task = $this->findUserTask($taskId);
+            
+            if (!$task) {
+                Yii::$app->session->setFlash('error', 'Task not found');
+                return $this->redirect(['task/tracker']);
+            }
+            
+            $successMessage = 'Task updated successfully!';
+            
+            if ($task->load(Yii::$app->request->post()) && $task->save()) {
+                Yii::$app->session->setFlash('success', $successMessage);
+                return $this->redirect(['task/tracker']);
+            }
+        } else {
+            Yii::$app->session->setFlash('error', 'No task ID provided for update');
+        }
+
+        return $this->redirect(['task/tracker']);
+    }
+
+    /**
+     * Toggles task completion status.
+     *
+     * @param integer $id Task ID
+     * @return mixed
+     */
+    public function actionToggle($id)
+    {
+        $task = $this->findUserTask($id);
+        
+        if (!$task) {
+            Yii::$app->session->setFlash('error', 'Task not found');
+            return $this->redirect(['task/tracker']);
+        }
+
+        $task->status = $task->status == Task::STATUS_COMPLETE ? Task::STATUS_INCOMPLETE : Task::STATUS_COMPLETE;
+        
+        if ($task->save()) {
+            $statusText = $task->status == Task::STATUS_COMPLETE ? 'completed' : 'marked as incomplete';
+            Yii::$app->session->setFlash('success', "Task {$statusText} successfully!");
+        } else {
+            Yii::$app->session->setFlash('error', 'Failed to update task status');
+        }
+
+        return $this->redirect(['task/tracker']);
+    }
+
+    /**
+     * Deletes a task.
+     *
+     * @param integer $id Task ID
+     * @return mixed
+     */
+    public function actionDelete($id)
+    {
+        $task = $this->findUserTask($id);
+        
+        if (!$task) {
+            Yii::$app->session->setFlash('error', 'Task not found');
+            return $this->redirect(['task/tracker']);
+        }
+
+        if ($task->delete()) {
+            Yii::$app->session->setFlash('success', 'Task deleted successfully!');
+        } else {
+            Yii::$app->session->setFlash('error', 'Failed to delete task');
+        }
+
+        return $this->redirect(['task/tracker']);
+    }
+
+    /**
+     * Find task by user ID.
+     * 
+     * @param integer $id Task ID
+     * @return Task|null
+     */
+    private function findUserTask($id)
+    {
+        return Task::findOne([
+            'id' => $id,
+            'user_id' => Yii::$app->user->id
+        ]);
     }
 }

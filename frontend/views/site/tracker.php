@@ -1,11 +1,14 @@
 <?php
 
-/** @var yii\web\View $this */
-/** @var common\models\Task $task */
-/** @var common\models\Task[] $tasks */
-
+use common\models\Task;
+use yii\grid\GridView;
 use yii\helpers\Html;
+use yii\web\View;
 use yii\widgets\ActiveForm;
+
+/** @var View $this */
+/** @var Task $task */
+/** @var Task[] $tasks */
 
 $this->title = 'Task Tracker';
 $this->params['breadcrumbs'][] = $this->title;
@@ -16,106 +19,160 @@ $this->params['breadcrumbs'][] = $this->title;
     <div class="body-content">
         <button
             type="button"
-            class="btn btn-primary"
+            class="btn btn-primary mb-3"
             data-bs-toggle="modal"
-            data-bs-target="#addTaskModal">
+            data-bs-target="#addTaskModal"
+            onclick="resetModalForm()">
             Add New Task
         </button>
-        
-        <div
-            class="modal fade"
-            id="addTaskModal"
-            tabindex="-1"
-            aria-labelledby="add-task-modal"
-            aria-hidden="true"
-        >
+
+        <div class="modal fade"
+            id="addTaskModal">
             <div class="modal-dialog">
                 <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"
-                        id="add-task-modal">
-                        Add Task
-                    </h5>
-                    <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <?php $form = ActiveForm::begin([
-                        'id' => 'task-form',
-                        'action' => ['task/create'],
-                        'enableAjaxValidation' => false,
-                        'enableClientValidation' => true,
-                        'validateOnSubmit' => true,
-                        'validateOnChange' => false,
-                        'validateOnBlur' => false,
-                    ]); ?>
-
-                    <div class="mb-3">
-                        <?= $form->field($task, 'name')->textInput([
-                            'placeholder' => 'Enter task name'
-                        ]) ?>
-                    </div>
-
-                    <div class="mb-3">
-                        <?= $form->field($task, 'deadline')->input('date') ?>
-                    </div>
-
-                    <div class="modal-footer">
+                    <div class="modal-header">
+                        <h5 class="modal-title"
+                            id="add-task-modal">
+                            Add Task
+                        </h5>
                         <button
                             type="button"
-                            class="btn btn-secondary"
-                            data-bs-dismiss="modal">
-                            Close
-                    </button>
-                        <?= Html::submitButton('Save Task', ['class' => 'btn btn-primary']) ?>
+                            class="btn-close"
+                            data-bs-dismiss="modal"></button>
                     </div>
-
-                    <?php ActiveForm::end(); ?>
-                </div>
+                    <div class="modal-body">
+                        <?php $form = ActiveForm::begin([
+                            'id' => 'task-form',
+                            'action' => ['task/update'],
+                            'enableAjaxValidation' => false,
+                            'enableClientValidation' => true,
+                            'validateOnSubmit' => true,
+                            'validateOnChange' => false,
+                            'validateOnBlur' => false,
+                        ]); ?>
+                        <input type="hidden"
+                            id="task-id"
+                            name="id"
+                            value="">
+                        <div class="mb-3">
+                            <?= $form->field($task, 'name')->textInput([
+                                'placeholder' => 'Enter task name',
+                                'id' => 'task-name'
+                            ]) ?>
+                        </div>
+                        <div class="mb-3">
+                            <?= $form->field($task, 'deadline')->input('date', [
+                                'id' => 'task-deadline'
+                            ]) ?>
+                        </div>
+                        <div class="modal-footer">
+                            <button
+                                type="button"
+                                class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+                                Close
+                            </button>
+                            <?= Html::submitButton('Save', ['class' => 'btn btn-primary', 'id' => 'save-button']) ?>
+                        </div>
+                        <?php ActiveForm::end(); ?>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="table-responsive mt-3">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Deadline</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($tasks)): ?>
-                        <tr>
-                            <td colspan="4"
-                                class="text-center">
-                                No tasks yet.
-                            </td>
-                        </tr>
-                    <?php else: ?>
-                        <?php foreach ($tasks as $taskItem): ?>
-                            <tr>
-                                <td><?= Html::encode($taskItem->name) ?></td>
-                                <td><?= Html::encode($taskItem->deadline) ?></td>
-                                <td>
-                                    <span class="badge bg-<?= $taskItem->status == 0 ? 'warning' : 'success' ?>">
-                                        <?= $taskItem->status == 0 ? 'Incomplete' : 'Complete' ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary">Edit</button>
-                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
+        <?= GridView::widget([
+            'dataProvider' => $dataProvider,
+            'tableOptions' => ['class' => 'table table-responsive mt-3'],
+            'rowOptions' => function ($model) {
+                return ['class' => $model->status == Task::STATUS_COMPLETE ? 'bg-success' : ''];
+            },
+            'columns' => [
+                [
+                    'attribute' => 'name',
+                    'contentOptions' => ['class' => 'your-custom-class'],
+                ],
+                [
+                    'attribute' => 'deadline',
+                    'format' => 'date',
+                    'contentOptions' => function ($model) {
+                        return ['class' => $model->isDeadlineMissed() ? 'text-danger fw-bold' : ''];
+                    },
+                    'value' => function ($model) {
+                        $html = Html::encode($model->deadline);
+                        if ($model->isDeadlineMissed()) {
+                            $html .= ' <span class="badge bg-danger">Missed Deadline</span>';
+                        }
+                        return $html;
+                    },
+                    'format' => 'raw',
+                ],
+                [
+                    'attribute' => 'status',
+                    'format' => 'raw',
+                    'value' => function ($model) {
+                        $class = $model->status == Task::STATUS_INCOMPLETE ? 'warning' : 'success';
+                        $text = $model->status == Task::STATUS_INCOMPLETE ? 'Incomplete' : 'Complete';
+                        return "<span class='badge bg-{$class}'>{$text}</span>";
+                    }
+                ],
+                [
+                    'class' => 'yii\grid\ActionColumn',
+                    'template' => '{edit} {delete} {toggle}',
+                    'buttons' => [
+                        'edit' => function ($url, $model) {
+                            return Html::button('Edit', [
+                                'class' => 'btn btn-sm btn-primary',
+                                'data-bs-toggle' => 'modal',
+                                'data-bs-target' => '#addTaskModal',
+                                'data-task-id' => $model->id,
+                                'data-task-name' => Html::encode($model->name),
+                                'data-task-deadline' => $model->deadline,
+                                'onclick' => 'editTask(this)',
+                            ]);
+                        },
+                        'delete' => function ($url, $model) {
+                            return Html::a('Delete', ['task/delete', 'id' => $model->id], [
+                                'class' => 'btn btn-sm btn-danger',
+                                'data-method' => 'post',
+                                'data-confirm' => 'Are you sure you want to delete this task?',
+                            ]);
+                        },
+                        'toggle' => function ($url, $model) {
+                            $isComplete = $model->status == Task::STATUS_COMPLETE;
+                            return Html::a(
+                                $isComplete ? 'Restore Task' : 'Complete Task',
+                                ['task/toggle', 'id' => $model->id],
+                                [
+                                    'class' => 'btn btn-sm ' . ($isComplete ? 'btn-warning' : 'btn-success'),
+                                    'data-method' => 'post',
+                                    'data-confirm' => $isComplete
+                                        ? 'Are you sure you want to restore this task?'
+                                        : 'Are you sure you want to complete this task?',
+                                ]
+                            );
+                        },
+                    ]
+                ]
+            ],
+        ]);
+        ?>
     </div>
 </div>
+
+<script>
+    function editTask(button) {
+        const taskId = button.getAttribute('data-task-id');
+        const taskName = button.getAttribute('data-task-name');
+        const taskDeadline = button.getAttribute('data-task-deadline');
+
+        document.getElementById('task-id').value = taskId;
+        document.getElementById('task-name').value = taskName;
+        document.getElementById('task-deadline').value = taskDeadline;
+    }
+
+    function resetModalForm() {
+        document.getElementById('task-id').value = '';
+        document.getElementById('task-name').value = '';
+        document.getElementById('task-deadline').value = '';
+    }
+</script>

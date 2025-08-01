@@ -61,4 +61,14 @@ class Task extends ActiveRecord
             'updated_at' => 'Updated At',
         ];
     }
+
+    /**
+     * Check if deadline was missed.
+     * 
+     * @return bool
+     */
+    public function isDeadlineMissed()
+    {
+        return strtotime($this->deadline) < strtotime(date('Y-m-d')) && $this->status == self::STATUS_INCOMPLETE;
+    }
 }
