@@ -90,10 +90,12 @@ $this->params['breadcrumbs'][] = $this->title;
                 [
                     'attribute' => 'name',
                     'contentOptions' => ['class' => 'your-custom-class'],
+                    'enableSorting' => true,
                 ],
                 [
                     'attribute' => 'deadline',
                     'format' => 'date',
+                    'enableSorting' => true,
                     'contentOptions' => function ($model) {
                         return ['class' => $model->isDeadlineMissed() ? 'text-danger fw-bold' : ''];
                     },
@@ -109,6 +111,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 [
                     'attribute' => 'status',
                     'format' => 'raw',
+                    'enableSorting' => true,
                     'value' => function ($model) {
                         $class = $model->status == Task::STATUS_INCOMPLETE ? 'warning' : 'success';
                         $text = $model->status == Task::STATUS_INCOMPLETE ? 'Incomplete' : 'Complete';

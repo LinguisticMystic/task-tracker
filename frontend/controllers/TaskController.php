@@ -61,7 +61,7 @@ class TaskController extends Controller
         $task = new Task();
 
         $dataProvider = new ActiveDataProvider([
-            'query' => Task::find()->where(['user_id' => Yii::$app->user->id])->orderBy(['created_at' => SORT_DESC]),
+            'query' => Task::find()->where(['user_id' => Yii::$app->user->id]),
             'pagination' => [
                 'pageSize' => self::PAGE_SIZE,
             ],
