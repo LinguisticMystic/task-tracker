@@ -9,11 +9,12 @@ SETUP INSTRUCTIONS
 -------------------
 1. Clone the repository.
 2. Run `composer install` from the project's root directory.
-3. Set up database credentials in `environments/prod/common/config/main-local.php`.
-4. Run `php init` and apply `Production` mode.
-5. Apply migrations with `php yii migrate`.
-6. Run `php -S localhost:8080 -t frontend/web`.
-7. Open `http://localhost:8080` in the browser.
+3. Create an empty database.
+4. Set up database credentials in `environments/prod/common/config/main-local.php`.
+5. Run `php init` and apply `Production` mode.
+6. Apply migrations with `php yii migrate`.
+7. Run `php -S localhost:8080 -t frontend/web`.
+8. Open `http://localhost:8080` in the browser.
 
 API ACCESS GUIDE
 -------------------
