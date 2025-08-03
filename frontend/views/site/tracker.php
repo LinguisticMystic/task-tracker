@@ -3,6 +3,7 @@
 use common\models\Task;
 use yii\grid\GridView;
 use yii\helpers\Html;
+use yii\helpers\Url;
 use yii\web\View;
 use yii\widgets\ActiveForm;
 
@@ -43,7 +44,7 @@ $this->params['breadcrumbs'][] = $this->title;
                     <div class="modal-body">
                         <?php $form = ActiveForm::begin([
                             'id' => 'task-form',
-                            'action' => ['task/update'],
+                            'action' => ['task/create'],
                             'enableAjaxValidation' => false,
                             'enableClientValidation' => true,
                             'validateOnSubmit' => true,
@@ -171,11 +172,15 @@ $this->params['breadcrumbs'][] = $this->title;
         document.getElementById('task-id').value = taskId;
         document.getElementById('task-name').value = taskName;
         document.getElementById('task-deadline').value = taskDeadline;
+
+        document.getElementById('task-form').action = '<?= Url::to(['task/update']) ?>';
     }
 
     function resetModalForm() {
         document.getElementById('task-id').value = '';
         document.getElementById('task-name').value = '';
         document.getElementById('task-deadline').value = '';
+
+        document.getElementById('task-form').action = '<?= Url::to(['task/create']) ?>';
     }
 </script>

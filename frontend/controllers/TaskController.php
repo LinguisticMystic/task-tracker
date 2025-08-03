@@ -5,9 +5,10 @@ namespace frontend\controllers;
 use Yii;
 use yii\web\Response;
 use yii\web\Controller;
+use yii\filters\auth\CompositeAuth;
+use yii\filters\auth\HttpBearerAuth;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
-use yii\filters\auth\HttpBearerAuth;
 use yii\data\ActiveDataProvider;
 use common\models\Task;
 
@@ -24,20 +25,26 @@ class TaskController extends Controller
     public function behaviors()
     {
         return [
+            'authenticator' => [
+                'class' => CompositeAuth::class,
+                'only' => ['api-tasks'],
+                'authMethods' => [
+                    [
+                        'class' => HttpBearerAuth::class,
+                    ],
+                ],
+                'optional' => ['api-tasks'],
+            ],
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['index', 'create', 'update', 'delete', 'tracker', 'toggle'],
+                'only' => ['index', 'create', 'update', 'delete', 'tracker', 'toggle', 'api-tasks'],
                 'rules' => [
                     [
-                        'actions' => ['index', 'create', 'update', 'delete', 'tracker', 'toggle'],
+                        'actions' => ['index', 'create', 'update', 'delete', 'tracker', 'toggle', 'api-tasks'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
                 ],
-            ],
-            'authenticator' => [
-                'class' => HttpBearerAuth::class,
-                'only' => ['api-tasks'],
             ],
             'verbs' => [
                 'class' => VerbFilter::class,
@@ -49,6 +56,17 @@ class TaskController extends Controller
                 ],
             ],
         ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function beforeAction($action)
+    {
+        if ($action->id === 'api-tasks') {
+            $this->enableCsrfValidation = false;
+        }
+        return parent::beforeAction($action);
     }
 
     /**
